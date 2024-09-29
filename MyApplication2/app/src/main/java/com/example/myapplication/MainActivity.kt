@@ -23,6 +23,8 @@ class MainActivity : ComponentActivity() {
     private var firstOperand: String = ""
     private var secondOperand: String = ""
     private var isOperatorSelected: Boolean = false
+    private var Deegres: Boolean = true
+    private var hasDecimal: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +56,9 @@ class MainActivity : ComponentActivity() {
 
         val ac: Button = findViewById(R.id.delete)
         val equal: Button = findViewById(R.id.equal)
+        val coma: Button = findViewById(R.id.coma)
 
+        val units: Button = findViewById(R.id.units)
         // Configurar los eventos para los botones numéricos
         val numberButtons = listOf(number0, number1, number2, number3, number4, number5, number6, number7, number8, number9)
         for ((i, button) in numberButtons.withIndex()) {
@@ -66,7 +70,7 @@ class MainActivity : ComponentActivity() {
         difference.setOnClickListener { selectOperator("-") }
         multiply.setOnClickListener { selectOperator("*") }
         division.setOnClickListener { selectOperator("/") }
-
+        coma.setOnClickListener { appendToDisplay(".")}
         // Operaciones trigonométricas
         sinus.setOnClickListener { applyTrigonometricFunction("sin") }
         cosinus.setOnClickListener { applyTrigonometricFunction("cos") }
@@ -77,14 +81,36 @@ class MainActivity : ComponentActivity() {
 
         // Botón AC (borrar)
         ac.setOnClickListener { clearDisplay() }
+        units.setOnClickListener {
+            units.text = changeunits(units.text.toString())
+        }
     }
 
     // Método para agregar texto al display
+    private fun changeunits(value: String): String {
+        Deegres = !Deegres  // Cambiar el estado de la variable
+        return if (Deegres) "Degrees" else "Radians"  // Retorna la nueva unidad
+    }
+
     private fun appendToDisplay(value: String) {
-        if (isOperatorSelected) {
-            secondOperand += value
+        if (value == ".") {
+            if (isOperatorSelected) {
+                // Solo permitir un punto decimal en el segundo operando
+                if (!secondOperand.contains(".")) {
+                    secondOperand += value
+                }
+            } else {
+                // Solo permitir un punto decimal en el primer operando
+                if (!firstOperand.contains(".")) {
+                    firstOperand += value
+                }
+            }
         } else {
-            firstOperand += value
+            if (isOperatorSelected) {
+                secondOperand += value
+            } else {
+                firstOperand += value
+            }
         }
         display.text = firstOperand + (currentOperator ?: "") + secondOperand
     }
@@ -101,10 +127,15 @@ class MainActivity : ComponentActivity() {
     // Método para aplicar funciones trigonométricas
     private fun applyTrigonometricFunction(function: String) {
         if (firstOperand.isNotEmpty()) {
+            val angle = if (Deegres) {
+                Math.toRadians(firstOperand.toDouble())  // Convierte a radianes si está en grados
+            } else {
+                firstOperand.toDouble()  // Usa directamente el valor si está en radianes
+            }
             val result = when (function) {
-                "sin" -> sin(Math.toRadians(firstOperand.toDouble()))
-                "cos" -> cos(Math.toRadians(firstOperand.toDouble()))
-                "tan" -> tan(Math.toRadians(firstOperand.toDouble()))
+                "sin" -> sin(angle)
+                "cos" -> cos(angle)
+                "tan" -> tan(angle)
                 else -> 0.0
             }
             display.text = result.toString()
